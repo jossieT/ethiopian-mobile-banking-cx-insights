@@ -12,15 +12,15 @@ APP_IDS = {
 # env
     'CBE': os.getenv('CBE_APP_ID', 'com.combanketh.mobilebanking'),
     'BOA': os.getenv('BOA_APP_ID', 'com.boa.boaMobileBanking'),
-    'Amharabank': os.getenv('AMHARABANK_APP_ID', 'com.amharabank.Aba_mobile_banking')
+    'Amharabank': os.getenv('DASHEN_APP_ID', 'com.dashen.dashensuperapp')
 
 }
 
 # Bank Names Mapping
 BANK_NAMES = {
     'CBE': 'Commercial Bank of Ethiopia',
-    'Awash': 'Awash Bank',
-    'Amharabank': 'Amharabank'
+    'BOA': 'Bank of Abyssinia',
+    'Dashen': 'Dashen Bank'
 }
 
 # Scraping Configuration
