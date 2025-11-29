@@ -140,6 +140,94 @@ class ReviewPreprocessor:
         # Record the new total count in stats
         self.stats['count_after_missing'] = len(self.df)
 
+    def remove_duplicates(self):
+        """Remove duplicate reviews from the DataFrame.
+
+        Strategy:
+        - If `review_id` exists, drop duplicates by `review_id` first (keep first occurrence).
+    
+        - Update `self.stats` with counts removed.
+        """
+        # Print a header for this step
+        print("\n[3/6] Removing duplicate reviews...")
+
+        before_count = len(self.df)
+
+        # If review_id column exists and has non-null values, prefer it for deduplication
+        if 'review_id' in self.df.columns:
+            try:
+                # Drop duplicates by review_id first
+                self.df = self.df.drop_duplicates(subset=['review_id'], keep='first')
+            except Exception:
+                # If something goes wrong (e.g., all NaNs), fall back to text-based dedupe
+                pass
+
+        # Reset index after removals
+        self.df = self.df.reset_index(drop=True)
+
+        removed = before_count - len(self.df)
+        if removed > 0:
+            print(f"Removed {removed} duplicate reviews")
+        else:
+            print("No duplicate reviews found")
+
+        # Record stats
+        self.stats['duplicates_removed'] = removed
+        self.stats['count_after_duplicates'] = len(self.df)
+
+    def remove_non_english(self):
+        """Remove reviews that contain Amharic characters or are predominantly non-ASCII.
+
+        Strategy:
+        - Remove any review containing characters in the Ge'ez (Amharic) Unicode block.
+        - Remove reviews where the ASCII portion is small (non-Latin languages or non-textual content).
+        - Update `self.stats` with counts removed.
+        """
+        # Print a header for this step
+        print("\n[4/6] Removing non-English reviews...")
+
+        before_count = len(self.df)
+
+        # Regex to detect Amharic (Ge'ez) characters
+        amharic_re = re.compile(r'[\u1200-\u137F]')
+
+        def is_english(text):
+            # Treat missing/empty as non-english
+            if pd.isna(text) or str(text).strip() == '':
+                return False
+
+            s = str(text)
+
+            # If any Amharic character is present, it's non-English
+            if amharic_re.search(s):
+                return False
+
+            # Keep only the ASCII-decoded portion and compare lengths
+            ascii_part = s.encode('ascii', errors='ignore').decode('ascii')
+
+            # Require at least one ASCII letter and a sufficient ASCII proportion
+            has_ascii_letter = bool(re.search(r'[A-Za-z]', ascii_part))
+            ascii_ratio = len(ascii_part) / max(len(s), 1)
+
+            return has_ascii_letter and (ascii_ratio >= 0.5)
+
+        # Apply filter
+        if 'review_text' in self.df.columns:
+            self.df = self.df[self.df['review_text'].apply(is_english)]
+
+        # Reset index after removals
+        self.df = self.df.reset_index(drop=True)
+
+        removed = before_count - len(self.df)
+        if removed > 0:
+            print(f"Removed {removed} non-English reviews")
+        else:
+            print("No non-English reviews found")
+
+        # Record stats
+        self.stats['non_english_removed'] = removed
+        self.stats['count_after_non_english'] = len(self.df)
+
     def normalize_dates(self):
         """Normalize date formats to YYYY-MM-DD"""
         # Print a header for this step [3/6]
@@ -370,8 +458,11 @@ class ReviewPreprocessor:
 
         # Run each step of the pipeline in sequence
         self.check_missing_data()
-        # self.remove_duplicates() - REMOVED AS REQUESTED
         self.handle_missing_values()
+        # Remove duplicate reviews early in the pipeline
+        self.remove_duplicates()
+        # Remove reviews that are Amharic or predominantly non-English
+        self.remove_non_english()
         self.normalize_dates()
         self.clean_text()
         self.validate_ratings()
