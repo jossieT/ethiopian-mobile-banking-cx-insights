@@ -140,6 +140,43 @@ class ReviewPreprocessor:
         # Record the new total count in stats
         self.stats['count_after_missing'] = len(self.df)
 
+    def remove_duplicates(self):
+        """Remove duplicate reviews from the DataFrame.
+
+        Strategy:
+        - If `review_id` exists, drop duplicates by `review_id` first (keep first occurrence).
+        - Then drop duplicates by `review_text` to catch any remaining duplicate content.
+        - Update `self.stats` with counts removed.
+        """
+        # Print a header for this step
+        print("\n[3/6] Removing duplicate reviews...")
+
+        before_count = len(self.df)
+
+        # If review_id column exists and has non-null values, prefer it for deduplication
+        if 'review_id' in self.df.columns:
+            try:
+                # Drop duplicates by review_id first
+                self.df = self.df.drop_duplicates(subset=['review_id'], keep='first')
+            except Exception:
+                # If something goes wrong (e.g., all NaNs), fall back to text-based dedupe
+                pass
+
+        # Always attempt to remove duplicate review_text to remove identical content
+        if 'review_text' in self.df.columns:
+            self.df = self.df.drop_duplicates(subset=['review_text'], keep='first')
+
+        # Reset index after removals
+        self.df = self.df.reset_index(drop=True)
+
+        removed = before_count - len(self.df)
+        if removed > 0:
+            print(f"Removed {removed} duplicate reviews")
+
+        # Record stats
+        self.stats['duplicates_removed'] = removed
+        self.stats['count_after_duplicates'] = len(self.df)
+
     def normalize_dates(self):
         """Normalize date formats to YYYY-MM-DD"""
         # Print a header for this step [3/6]
@@ -370,8 +407,9 @@ class ReviewPreprocessor:
 
         # Run each step of the pipeline in sequence
         self.check_missing_data()
-        # self.remove_duplicates() - REMOVED AS REQUESTED
         self.handle_missing_values()
+        # Remove duplicate reviews early in the pipeline
+        self.remove_duplicates()
         self.normalize_dates()
         self.clean_text()
         self.validate_ratings()

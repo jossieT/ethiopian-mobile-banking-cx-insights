@@ -12,7 +12,7 @@ APP_IDS = {
 # env
     'CBE': os.getenv('CBE_APP_ID', 'com.combanketh.mobilebanking'),
     'BOA': os.getenv('BOA_APP_ID', 'com.boa.boaMobileBanking'),
-    'Amharabank': os.getenv('DASHEN_APP_ID', 'com.dashen.dashensuperapp')
+    'Dashen': os.getenv('DASHEN_APP_ID', 'com.dashen.dashensuperapp')
 
 }
 
