@@ -1,7 +1,11 @@
+# Ignore data directory containing raw and processed datasets
 data/
 
+# Ignore Python bytecode caches
 __pycache__/
 
+# Ignore virtual environment directory
 .venv
 
+# Ignore environment variables file that may contain secrets
 .env
