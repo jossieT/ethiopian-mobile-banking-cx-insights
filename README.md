@@ -10,6 +10,7 @@ An analysis pipeline for collecting and preprocessing Google Play reviews for th
 
 - Collect user reviews and metadata from Google Play for three target bank apps.
 - Clean and normalize the data to a reliable CSV for analysis.
+- Clean duplicate data
 - Clean non-english like Amharic reviews
 - Provide exploratory visualizations showing rating trends, review volumes, and text statistics.
 
