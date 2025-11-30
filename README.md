@@ -12,6 +12,7 @@ An analysis pipeline for collecting and preprocessing Google Play reviews for th
 - Clean and normalize the data to a reliable CSV for analysis.
 - Clean duplicate data
 - Clean non-english like Amharic reviews
+- Remove emoji from the review text
 - Provide exploratory visualizations showing rating trends, review volumes, and text statistics.
 
 ---
@@ -118,6 +119,31 @@ jupyter notebook Scripts\preprocessing_EDA.ipynb
 
 ---
 
+**Sentiment Analysis (implementation)**
+
+This project includes a lightweight sentiment analysis workflow implemented in `Scripts/sentiment_snalysis.ipynb`. The notebook demonstrates both lexicon-based and simple supervised approaches used during Task 1.
+
+- Lexicon-based methods (implemented):
+   - TextBlob: computes polarity and subjectivity for each review (`tb_polarity`, `tb_subjectivity`) and maps polarity to `tb_sentiment` labels (`positive`/`neutral`/`negative`). Useful for quick polarity scoring and prototyping.
+   - VADER (NLTK's SentimentIntensityAnalyzer): computes a `vader_compound` score optimized for short social-style texts and reviews. Compound scores are mapped to `vader_sentiment` using standard thresholds (>= 0.05 → positive, <= -0.05 → negative, otherwise neutral).
+
+- Supervised / ML-ready labeling (demonstrated):
+   - A simple mapping from star ratings to sentiment labels is included for supervised experiments (`rating_to_label`): 1–2 → negative, 3 → neutral, 4–5 → positive.
+   - The notebook shows how to prepare features (cleaned text, `CountVectorizer` and `TfidfVectorizer`), split data, and train baseline classifiers (e.g., `MultinomialNB`, `LinearSVC`).
+
+- Outputs written in the notebook: additional columns appended to the processed DataFrame such as `tb_polarity`, `tb_subjectivity`, `tb_sentiment`, `vader_compound`, `vader_sentiment`, and `sentiment_label` (from rating). These columns can be exported to CSV for downstream analysis.
+
+Usage notes and recommendations:
+- The notebook uses `nltk` (VADER) and `textblob` for lexicon approaches; add these to `requirements.txt` if you plan to run the notebook.
+- For production-quality sentiment classification consider:
+   - Using a more robust language detector to pre-filter non-English text before sentiment scoring.
+   - Fine-tuning or training transformer-based models (e.g., `distilbert`) if labeled data/supporting compute is available.
+   - Evaluating model performance with a labeled validation set and standard metrics (precision/recall/F1) per class.
+
+---
+
+---
+
 **Git Workflow & Best Practices**
 
 - Work on branch `task-1` for Task 1 development; keep commits small and descriptive.
@@ -144,94 +170,3 @@ If you want, I can also:
 **Contact**
 Project maintained in this repository — open issues or PRs for questions and review.
 
-```// filepath: c:\Users\Jose\Desktop\KAIM8\WEEK2\Code\Ethiopian Mobile Banking CX Insights\README.md
-
-# Ethiopian Mobile Banking CX Insights — Task 1
-
-Short summary
-- Collect user reviews from Google Play for three Ethiopian banks (CBE, BOA, Dashen).
-- Preprocess the scraped reviews for analysis (dedupe, missing values, date normalization, basic cleaning).
-- Save processed CSVs and provide visualization notebook.
-
-Minimum deliverables
-- Scraped data: minimum 400 reviews per bank (≈1,200 total).
-- Preprocessing script: Scripts/preprocessing.py
-- Analysis notebook: Scripts/preprocessing_EDA.ipynb
-- GitHub repository with .gitignore and clear commits on branch `task-1`.
-
-Repository structure (key files)
-- Scripts/
-  - scraper.py — collects reviews via google-play-scraper
-  - preprocessing.py — data cleaning pipeline (load, missing handling, dedupe, language filter, normalize, save)
-  - preprocessing_EDA.ipynb — EDA and visualizations
-  - config.py — app IDs, bank names, data paths, scraping config
-- data/
-  - raw/ — raw scraped CSVs (DATA_PATHS['raw_reviews'])
-  - processed/ — processed CSVs (DATA_PATHS['processed_reviews'])
-- .env — optional local overrides for app IDs
-- .gitignore
-- requirements.txt (recommended)
-
-How it works — high level
-1. Scrape
-   - scraper.py fetches reviews, ratings, dates, user names and other metadata for each target bank app.
-   - Target: 400+ reviews per bank. Raw output saved to data/raw/reviews_raw.csv.
-
-2. Preprocess
-   - removal of rows with missing critical fields (review_text, rating, bank_name)
-   - remove duplicate reviews (by review_id when available)
-   - filter out non-English / Amharic reviews (basic heuristic)
-   - normalize review_date to YYYY-MM-DD and extract year/month
-   - clean text and compute text_length
-   - validate ratings (keep 1–5)
-   - final CSV saved to data/processed/reviews_processed.csv
-
-3. Visualize / EDA
-   - preprocessing_EDA.ipynb contains plots: rating distribution, reviews-per-bank, review length distribution, reviews over time, average rating over time (CBE, BOA, Dashen).
-
-Quickstart (Windows)
-1. Create a venv and install deps
-   - python -m venv .venv
-   - .venv\Scripts\activate
-   - python -m pip install -r requirements.txt
-
-2. (Optional) Add API/config overrides to .env
-   - CBE_APP_ID, BOA_APP_ID, DASHEN_APP_ID — defaults exist in config.py
-
-3. Run scraper
-   - python Scripts\scraper.py
-   - Output: data/raw/reviews_raw.csv
-
-4. Run preprocessing
-   - python Scripts\preprocessing.py
-   - Output: data/processed/reviews_processed.csv
-   - The script prints a preprocessing report.
-
-5. Open notebook
-   - jupyter notebook Scripts\preprocessing_EDA.ipynb
-   - or run the notebook in VS Code
-
-Data schema (processed CSV)
-- review_id, review_text, rating, review_date, review_year, review_month,
-  bank_code, bank_name, user_name, thumbs_up, text_length, source
-
-Git workflow recommendations
-- Work on branch `task-1` until Task 1 is complete.
-- Commit frequently and with meaningful messages:
-  - e.g., "task-1: add scraper that fetches reviews for three banks"
-  - e.g., "task-1: add preprocessing pipeline — handle missing values, dedupe"
-- Include .gitignore to avoid committing data/, .env, __pycache__, .venv
-- Push regularly and open a pull request when ready for review.
-
-Notes & next steps
-- Language detection is currently heuristic; for higher accuracy consider `langdetect` or `fastText`.
-- Consider adding unit tests for preprocessing functions.
-- Add requirements.txt listing packages used (pandas, numpy, google-play-scraper, matplotlib, seaborn, tqdm, python-dotenv).
-- Ensure sensitive tokens or credentials are not committed — keep them in .env.
-
-License
-- Add a license file if required (MIT recommended for open source).
-
-Contact / Author
-- Project maintained in this repo. Use GitHub issues / PRs for discussions.
-```
