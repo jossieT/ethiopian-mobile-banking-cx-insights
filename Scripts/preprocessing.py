@@ -228,6 +228,65 @@ class ReviewPreprocessor:
         self.stats['non_english_removed'] = removed
         self.stats['count_after_non_english'] = len(self.df)
 
+    def remove_emojis(self):
+        """Remove emoji characters from `review_text`.
+
+        - Strips common emoji / pictograph Unicode ranges using a compiled regex.
+        - Trims whitespace and drops rows that become empty after removal.
+        - Updates `self.stats` with the number of rows removed.
+        """
+        print("\n[5/6] Removing emojis from review text...")
+
+        before_count = len(self.df)
+
+        # Broad emoji/pictograph ranges
+        emoji_re = re.compile(
+            '['
+            u'\U0001F600-\U0001F64F'  # emoticons
+            u'\U0001F300-\U0001F5FF'  # symbols & pictographs
+            u'\U0001F680-\U0001F6FF'  # transport & map symbols
+            u'\U0001F1E0-\U0001F1FF'  # flags
+            u'\U00002700-\U000027BF'
+            u'\U000024C2-\U0001F251'
+            u'\U0001F900-\U0001F9FF'
+            u'\U0001FA70-\U0001FAFF'
+            u'\u2600-\u26FF\u2700-\u27BF'
+            ']+', flags=re.UNICODE
+        )
+
+        if 'review_text' in self.df.columns:
+            # Ensure string type
+            texts = self.df['review_text'].astype(str)
+
+            # Count emojis per row and total
+            emoji_counts = texts.map(lambda s: len(emoji_re.findall(s)))
+            total_emojis = int(emoji_counts.sum())
+
+            # Remove emojis and strip whitespace
+            self.df['review_text'] = texts.map(lambda s: emoji_re.sub('', s)).str.strip()
+
+            # Drop rows that became empty after emoji removal
+            before_drop = len(self.df)
+            self.df = self.df[self.df['review_text'].str.len() > 0]
+            dropped = before_drop - len(self.df)
+        else:
+            total_emojis = 0
+            dropped = 0
+
+        # Reset index
+        self.df = self.df.reset_index(drop=True)
+
+        removed = before_count - len(self.df)
+        # Print detailed summary: rows dropped and total emojis stripped
+        if removed > 0 or total_emojis > 0:
+            print(f"Removed {removed} reviews (empty after emoji removal); stripped {total_emojis} emoji characters")
+        else:
+            print("No reviews removed during emoji stripping; no emojis found")
+
+        self.stats['emoji_removed_rows'] = removed
+        self.stats['emojis_removed_total'] = int(total_emojis)
+        self.stats['count_after_emoji'] = len(self.df)
+
     def normalize_dates(self):
         """Normalize date formats to YYYY-MM-DD"""
         # Print a header for this step [3/6]
@@ -463,6 +522,8 @@ class ReviewPreprocessor:
         self.remove_duplicates()
         # Remove reviews that are Amharic or predominantly non-English
         self.remove_non_english()
+        # Strip emojis from review text and drop rows that become empty
+        self.remove_emojis()
         self.normalize_dates()
         self.clean_text()
         self.validate_ratings()
