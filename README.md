@@ -71,6 +71,21 @@ An analysis pipeline for collecting and preprocessing Google Play reviews for th
 
 ---
 
+**Task 2 — Database & Analytics**
+
+The project has been extended to include a PostgreSQL database integration and advanced insights generation.
+
+1.  **Database Insertion**
+    -   `Scripts/insert_into_tables.ipynb`: Handles the creation of tables (`banks`, `reviews`) and inserts the processed data from CSV files into the PostgreSQL database.
+
+2.  **Results Display**
+    -   `Scripts/display_results.ipynb`: Connects to the database and executes SQL queries to display key metrics such as total reviews per bank and average ratings.
+
+3.  **Insights & Recommendations**
+    -   `Scripts/insights_and_recommendaions.ipynb`: Performs advanced exploratory data analysis (EDA), sentiment analysis using TextBlob, and generates actionable recommendations based on the data. It includes visualizations for rating distributions and sentiment analysis.
+
+---
+
 **Quickstart (Windows)**
 
 1. Create and activate a virtual environment:
